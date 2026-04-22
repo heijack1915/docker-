@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Docker离线安装指南</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 11pt; line-height: 1.8; color: #333; max-width: 210mm; margin: 0 auto; padding: 20mm 18mm; background: #fff; }
+h1 { font-size: 24pt; color: #1a1a2e; margin: 40pt 0 15pt 0; padding-bottom: 8pt; border-bottom: 3px solid #2D5F8A; }
+h2 { font-size: 16pt; color: #2D5F8A; margin: 28pt 0 12pt 0; }
+h3 { font-size: 12pt; color: #333; margin: 18pt 0 8pt 0; font-weight: 600; }
+p { margin: 10pt 0; text-align: justify; }
+ul, ol { margin: 10pt 0 10pt 24pt; }
+li { margin: 6pt 0; }
+table { width: 100%; border-collapse: collapse; margin: 15pt 0; }
+th { background: #2D5F8A; color: #fff; padding: 10pt 12pt; text-align: left; font-weight: 600; }
+td { padding: 8pt 12pt; border-bottom: 1px solid #e0e0e0; }
+tr:nth-child(even) { background: #f5f8fa; }
+tr:hover { background: #e8f0f5; }
+code { font-family: "SF Mono", Monaco, Consolas, "Liberation Mono", monospace; background: #f4f4f4; padding: 2px 6px; border-radius: 3px; font-size: 9.5pt; }
+pre { background: #1e1e1e; color: #d4d4d4; padding: 15pt; border-radius: 6px; margin: 12pt 0; overflow-x: auto; font-size: 9pt; line-height: 1.5; }
+pre code { background: transparent; padding: 0; color: #d4d4d4; }
+blockquote { border-left: 4px solid #2D5F8A; padding: 8pt 15pt; margin: 12pt 0; background: #f0f5fa; font-style: italic; }
+hr { border: none; border-top: 1px solid #e0e0e0; margin: 25pt 0; }
+strong { color: #2D5F8A; }
+a { color: #2D5F8A; text-decoration: none; }
+.header { position: fixed; top: 0; left: 0; right: 0; height: 4px; background: #2D5F8A; }
+.footer { position: fixed; bottom: 0; left: 0; right: 0; padding: 10pt 18mm; border-top: 1px solid #e0e0e0; font-size: 9pt; color: #888; }
+.footer span { display: block; text-align: center; }
+.page-break { page-break-before: always; }
+.highlight-box { background: #fff8e6; border-left: 4px solid #f0ad4e; padding: 12pt 15pt; margin: 15pt 0; }
+.highlight-box strong { color: #d68a0a; }
+</style>
+</head>
+<body>
+<div class="header"></div>
+
+<h1>Docker 离线安装指南</h1>
+
+<h2>文档信息</h2>
+<table>
+<tr><th>项目</th><th>说明</th></tr>
+<tr><td>文档版本</td><td>v1.0</td></tr>
+<tr><td>更新日期</td><td>2026-04-03</td></tr>
+<tr><td>适用系统</td><td>Ubuntu 20.04 / 22.04 / 24.04</td></tr>
+<tr><td>Docker版本</td><td>24.0.6</td></tr>
+<tr><td>Docker Compose版本</td><td>v2.24.0</td></tr>
+</table>
+
+<h2>背景说明</h2>
+
+<h3>适用场景</h3>
+<p>本指南适用于以下场景：</p>
+<ul>
+<li>内网/离线环境，无法访问外网</li>
+<li>APT源配置损坏（如CD-ROM源失效）</li>
+<li>需要快速部署Docker环境</li>
+<li>生产环境需要可控的Docker版本</li>
+</ul>
+
+<h3>为什么选择离线安装</h3>
+<table>
+<tr><th>方案</th><th>优点</th><th>缺点</th></tr>
+<tr><td>APT在线安装</td><td>自动处理依赖</td><td>需要外网，源可能不可用</td></tr>
+<tr><td>Snap安装</td><td>简单</td><td>版本旧，性能差</td></tr>
+<tr><td><strong>离线包安装</strong></td><td><strong>可控、无需外网</strong></td><td><strong>需手动下载离线包</strong></td></tr>
+</table>
+
+<div class="page-break"></div>
+
+<h2>准备工作</h2>
+
+<h3>所需文件</h3>
+<p>在有网络的电脑上下载以下文件（共2个）：</p>
+<table>
+<tr><th>文件名</th><th>下载地址</th><th>说明</th></tr>
+<tr><td>docker-24.0.6.tgz</td><td>https://download.docker.com/linux/static/stable/x86_64/docker-24.0.6.tgz</td><td>Docker主程序</td></tr>
+<tr><td>docker-compose-linux-x86_64</td><td>https://github.com/docker/compose/releases/download/v2.24.0/docker-compose-linux-x86_64</td><td>Docker Compose插件</td></tr>
+</table>
+
+<h3>文件传输</h3>
+<p>将下载的文件通过U盘或其他方式拷贝到目标服务器的同一目录下：</p>
+<pre><code>/path/to/your/files/
+├── docker-24.0.6.tgz
+├── docker-compose-linux-x86_64
+└── docker-offline-install.sh   ← 安装脚本</code></pre>
+
+<h2>安装步骤</h2>
+
+<h3>方法一：使用脚本安装（推荐）</h3>
+
+<h3>1. 赋予执行权限</h3>
+<pre><code>chmod +x docker-offline-install.sh</code></pre>
+
+<h3>2. 执行安装脚本</h3>
+<pre><code>sudo ./docker-offline-install.sh</code></pre>
+
+<h3>3. 预期输出</h3>
+<pre><code>==============================================
+  Docker 离线安装脚本
+  Docker: 24.0.6
+  Docker Compose: v2.24.0
+==============================================
+
+[1/6] 解压Docker主程序...
+[2/6] 安装Docker Compose...
+[3/6] 创建Docker服务...
+[4/6] 重载Systemd配置...
+[5/6] 设置开机自启动...
+[6/6] 启动Docker服务...
+
+==============================================
+  安装完成！验证结果：
+==============================================
+Docker版本:      Docker version 24.0.6
+Docker Compose:   Docker Compose version v2.24.0
+Docker服务状态:   active
+==============================================</code></pre>
+
+<div class="page-break"></div>
+
+<h3>方法二：手动安装</h3>
+<p>如果不想使用脚本，可以手动执行以下步骤：</p>
+
+<h3>1. 解压Docker</h3>
+<pre><code>tar -xvf docker-24.0.6.tgz -C /usr/local/bin --strip-components=1</code></pre>
+
+<h3>2. 安装Docker Compose</h3>
+<pre><code># 移动文件
+mv docker-compose-linux-x86_64 /usr/local/bin/docker-compose
+
+# 赋予执行权限
+chmod +x /usr/local/bin/docker-compose
+
+# 创建软链接（Docker v2兼容）
+ln -sf /usr/local/bin/docker-compose /usr/local/bin/docker-compose-plugin</code></pre>
+
+<h3>3. 创建Systemd服务</h3>
+<pre><code>cat > /etc/systemd/system/docker.service << 'EOF'
+[Unit]
+Description=Docker Application Container Engine
+Documentation=https://docs.docker.com
+After=network-online.target firewalld.service
+Wants=network-online.target
+
+[Service]
+Type=notify
+ExecStart=/usr/local/bin/dockerd
+ExecReload=/bin/kill -s HUP $MAINPID
+LimitNOFILE=infinity
+LimitNPROC=infinity
+TimeoutStartSec=0
+Delegate=yes
+KillMode=process
+Restart=on-failure
+StartLimitBurst=3
+StartLimitInterval=60s
+
+[Install]
+WantedBy=multi-user.target
+EOF</code></pre>
+
+<h3>4. 启动服务</h3>
+<pre><code>systemctl daemon-reload
+systemctl enable docker.service
+systemctl start docker</code></pre>
+
+<h2>配置镜像加速（可选）</h2>
+
+<h3>如果有内网镜像仓库</h3>
+<p>创建配置文件：</p>
+<pre><code>sudo mkdir -p /etc/docker
+sudo tee /etc/docker/daemon.json << 'EOF'
+{
+  "registry-mirrors": ["https://你的内网镜像地址"],
+  "insecure-registries": ["内网registry IP:端口"]
+}
+EOF
+
+# 重启Docker生效
+sudo systemctl restart docker</code></pre>
+
+<h3>常用国内镜像（仅供参考）</h3>
+<table>
+<tr><th>镜像源</th><th>地址</th></tr>
+<tr><td>阿里云</td><td>https://registry.cn-hangzhou.aliyuncs.com</td></tr>
+<tr><td>中科大</td><td>https://docker.mirrors.ustc.edu.cn</td></tr>
+<tr><td>网易</td><td>http://hub-mirror.c.163.com</td></tr>
+</table>
+
+<div class="page-break"></div>
+
+<h2>验证安装</h2>
+
+<h3>检查Docker版本</h3>
+<pre><code>docker --version
+# 输出：Docker version 24.0.6</code></pre>
+
+<h3>检查Docker Compose版本</h3>
+<pre><code>docker-compose --version
+# 输出：Docker Compose version v2.24.0
+
+# 或使用Docker内置命令
+docker compose version</code></pre>
+
+<h3>检查服务状态</h3>
+<pre><code>systemctl status docker</code></pre>
+
+<h3>运行测试容器</h3>
+<pre><code>docker run hello-world</code></pre>
+<p>如果看到以下输出，说明安装成功：</p>
+<pre><code>Hello from Docker!
+This message shows that your installation appears to be working correctly.</code></pre>
+
+<h2>卸载方法</h2>
+
+<h3>停止并禁用服务</h3>
+<pre><code>systemctl stop docker
+systemctl disable docker.service</code></pre>
+
+<h3>删除文件</h3>
+<pre><code># 删除Docker程序
+rm -f /usr/local/bin/docker
+rm -f /usr/local/bin/dockerd
+rm -f /usr/local/bin/docker-init
+rm -f /usr/local/bin/docker-proxy
+rm -f /usr/local/bin/containerd
+rm -f /usr/local/bin/containerd-shim
+rm -f /usr/local/bin/containerd-shim-runc-v2
+rm -f /usr/local/bin/ctr
+rm -f /usr/local/bin/runc
+
+# 删除Docker Compose
+rm -f /usr/local/bin/docker-compose
+rm -f /usr/local/bin/docker-compose-plugin
+
+# 删除服务文件
+rm -f /etc/systemd/system/docker.service
+
+# 删除配置（可选）
+rm -rf /etc/docker
+rm -rf /var/lib/docker</code></pre>
+
+<h3>重载Systemd</h3>
+<pre><code>systemctl daemon-reload</code></pre>
+
+<div class="page-break"></div>
+
+<h2>常见问题</h2>
+
+<h3>Q1: 提示 "cannot connect to the docker daemon"</h3>
+<p><strong>原因</strong>：Docker守护进程未启动或当前用户没有docker权限</p>
+<p><strong>解决方法</strong>：</p>
+<pre><code># 启动Docker
+sudo systemctl start docker
+
+# 将当前用户加入docker组
+sudo usermod -aG docker $USER
+# 然后重新登录</code></pre>
+
+<h3>Q2: 提示 "permission denied while trying to connect to the Docker daemon socket"</h3>
+<p><strong>原因</strong>：没有docker组权限</p>
+<p><strong>解决方法</strong>：</p>
+<pre><code>sudo usermod -aG docker $USER
+newgrp docker
+# 或重新登录</code></pre>
+
+<h3>Q3: Docker服务启动失败</h3>
+<p><strong>排查步骤</strong>：</p>
+<pre><code># 查看详细日志
+journalctl -u docker -n 50
+
+# 检查端口占用
+netstat -tlnp | grep 2375
+
+# 手动启动查看错误
+/usr/local/bin/dockerd --debug</code></pre>
+
+<h3>Q4: containerd未安装导致运行容器失败</h3>
+<p><strong>错误信息</strong>：</p>
+<pre><code>Error starting daemon: error initializing shim: OCI runtime create failed</code></pre>
+<p><strong>解决方法</strong>：下载并安装containerd单独包</p>
+<pre><code># 下载containerd
+wget https://github.com/containerd/containerd/releases/download/v1.7.8/containerd-1.7.8-linux-amd64.tar.gz
+
+# 解压
+tar -xvf containerd-1.7.8-linux-amd64.tar.gz -C /usr/local/bin --strip-components=1</code></pre>
+
+<h3>Q5: 如何升级Docker？</h3>
+<p>离线环境下需要重新下载新版本的离线包，然后：</p>
+<pre><code># 停止Docker
+sudo systemctl stop docker
+
+# 重新解压（会覆盖旧版本）
+sudo tar -xvf docker-新版本.tgz -C /usr/local/bin --strip-components=1
+
+# 重启
+sudo systemctl start docker</code></pre>
+
+<h2>附录</h2>
+
+<h3>Docker Compose离线包下载地址</h3>
+<table>
+<tr><th>版本</th><th>下载地址</th></tr>
+<tr><td>v2.24.0（最新）</td><td>https://github.com/docker/compose/releases/download/v2.24.0/docker-compose-linux-x86_64</td></tr>
+<tr><td>v2.23.0</td><td>https://github.com/docker/compose/releases/download/v2.23.0/docker-compose-linux-x86_64</td></tr>
+<tr><td>v2.20.0</td><td>https://github.com/docker/compose/releases/download/v2.20.0/docker-compose-linux-x86_64</td></tr>
+</table>
+
+<h3>Docker各版本下载地址</h3>
+<table>
+<tr><th>版本</th><th>下载地址</th></tr>
+<tr><td>24.0.6（最新）</td><td>https://download.docker.com/linux/static/stable/x86_64/docker-24.0.6.tgz</td></tr>
+<tr><td>23.0.6</td><td>https://download.docker.com/linux/static/stable/x86_64/docker-23.0.6.tgz</td></tr>
+<tr><td>20.10.24</td><td>https://download.docker.com/linux/static/stable/x86_64/docker-20.10.24.tgz</td></tr>
+</table>
+
+<h3>参考链接</h3>
+<ul>
+<li>Docker官方文档：https://docs.docker.com/engine/install/</li>
+<li>Docker Compose发布页：https://github.com/docker/compose/releases</li>
+<li>Docker离线包列表：https://download.docker.com/linux/static/stable/x86_64/</li>
+</ul>
+
+<hr>
+<p style="text-align: center; color: #888; font-size: 9pt; margin-top: 30pt;">文档由Matrix Agent生成 | 2026-04-03</p>
+
+<div class="footer">
+<span>Docker离线安装指南 v1.0 | Matrix Agent</span>
+</div>
+
+</body>
+</html>
